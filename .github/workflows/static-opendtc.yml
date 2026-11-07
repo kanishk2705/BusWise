@@ -1,0 +1,31 @@
+name: Static from OpenDTC snapshot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet requests gtfs-realtime-bindings
+      - name: Fetch OpenDTC static.db (Git LFS, July 2026 snapshot)
+        run: |
+          git lfs install
+          git clone --depth 1 https://github.com/dorkishguy/openDTC.git opendtc
+          ls -la opendtc/static.db opendtc/docs/static.db 2>/dev/null || true
+      - name: Describe and export
+        run: |
+          db=opendtc/static.db; [ -s opendtc/docs/static.db ] && [ $(stat -c%s opendtc/docs/static.db) -gt 1000 ] && db=opendtc/docs/static.db
+          python scripts/sqlite_to_gtfs.py "$db" gtfs_opendtc
+      - name: Compare with live
+        env:
+          OTD_API_KEY: ${{ secrets.OTD_API_KEY }}
+        run: python scripts/compare_static_live.py gtfs_opendtc
