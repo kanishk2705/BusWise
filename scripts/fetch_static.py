@@ -58,6 +58,12 @@ for kind in FILES:
     ctype = r.headers.get("Content-Type", "")
     disp = r.headers.get("Content-Disposition", "")
     print(f"{kind}: HTTP {r.status_code}, {len(r.content):,} bytes, type={ctype}, disposition={disp}")
+    print(f"   final url: {r.url}; redirects: {[(h.status_code, h.headers.get('Location')) for h in r.history]}")
+    if r.status_code == 404 and kind == "stops":
+        for path in ["/data/static/GTFS.zip", "/static/GTFS.zip", "/media/GTFS.zip", "/GTFS.zip",
+                     "/static/data/GTFS.zip", "/data/GTFS.zip"]:
+            g = s.get(BASE + path, timeout=60)
+            print(f"   try GET {path}: HTTP {g.status_code}, {len(g.content):,} bytes, starts={g.content[:2]!r}")
     body = r.content
     if body[:2] == b"PK":
         with zipfile.ZipFile(io.BytesIO(body)) as z:
