@@ -77,8 +77,10 @@ def main():
         if i < SNAPSHOTS - 1:
             time.sleep(GAP_SECONDS)
 
-    good = [s for s in snaps if s.get("ok")]
-    report = {"checked_at": ist(int(time.time())), "snapshots_ok": len(good), "snapshots_total": len(snaps)}
+    empty = sum(1 for s in snaps if s.get("ok") and not s["rows"])
+    good = [s for s in snaps if s.get("ok") and s["rows"]]
+    report = {"checked_at": ist(int(time.time())), "snapshots_with_data": len(good),
+              "snapshots_empty": empty, "snapshots_total": len(snaps)}
     lines = ["# Delhi OTD live feed check", "", f"Checked at {report['checked_at']}", ""]
 
     if not good:

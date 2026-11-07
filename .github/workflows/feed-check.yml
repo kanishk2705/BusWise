@@ -23,6 +23,8 @@ jobs:
       - name: Fetch and summarise live feed
         env:
           OTD_API_KEY: ${{ secrets.OTD_API_KEY }}
+          SNAPSHOTS: "8"
+          GAP_SECONDS: "20"
         run: python scripts/check_feed.py
       - uses: actions/upload-artifact@v4
         if: always()
