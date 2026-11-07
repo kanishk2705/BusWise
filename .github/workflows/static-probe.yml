@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - scripts/probe_static.py
+      - scripts/compare_static_live.py
       - .github/workflows/static-probe.yml
 
 permissions:
@@ -13,11 +13,19 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install --quiet requests
-      - run: python scripts/probe_static.py
+      - run: pip install --quiet requests gtfs-realtime-bindings
+      - name: Get archived Delhi static GTFS (Transitland)
+        run: |
+          git clone -q --filter=blob:none --no-checkout https://github.com/transitland/gtfs-archives-not-hosted-elsewhere.git tl
+          git -C tl show 3e21159c330526c646460d5fbaf2aef5c75cbe55:delhi-bus.zip > delhi-bus.zip
+          unzip -q -o delhi-bus.zip -d gtfs_archive
+      - name: Compare static with live
+        env:
+          OTD_API_KEY: ${{ secrets.OTD_API_KEY }}
+        run: python scripts/compare_static_live.py gtfs_archive
