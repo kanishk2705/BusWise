@@ -1,9 +1,10 @@
 name: Collect
 
 # One collector run lasts about 5 h 40 min (GitHub's job limit is 6 h).
-# At the end it starts the next run itself; the Watchdog workflow restarts
-# collection if the chain ever breaks. The concurrency group guarantees that
-# only one collector runs at a time.
+# Each run queues its successor as its first step; the concurrency group holds
+# the successor until the current run ends, so collection continues even after
+# a crash. The Watchdog workflow is an extra safety net. Only one collector
+# runs at a time.
 
 on:
   workflow_dispatch:
@@ -31,6 +32,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 355
     steps:
+      # Queue the successor now. Thanks to the concurrency group it waits until
+      # this run ends for ANY reason (finish, crash, timeout), then starts at once.
+      # Skipped if the last 3 runs all failed, to avoid a fast failure loop.
+      - name: Queue the next run
+        if: (inputs.chain || 'true') == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          fails=$(gh run list -R "$REPO" --workflow collect.yml --status completed -L 3 --json conclusion -q '[.[] | select(.conclusion=="failure")] | length')
+          if [ "$fails" -ge 3 ]; then
+            echo "Last 3 runs failed; not queueing another." >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh workflow run collect.yml --ref main -R "$REPO"
+          fi
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -55,8 +71,3 @@ jobs:
           path: out/
           if-no-files-found: ignore
           retention-days: 14
-      - name: Start the next run
-        if: always() && (inputs.chain || 'true') == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run collect.yml --ref main -R ${{ github.repository }}
