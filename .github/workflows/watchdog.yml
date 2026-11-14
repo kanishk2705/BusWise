@@ -1,10 +1,10 @@
 name: Watchdog
 
-# Hourly safety net: if no collector run is running or queued, start one.
+# Safety net (every 30 min): if no collector run is running or queued, start one.
 
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "7,37 * * * *"
   workflow_dispatch:
 
 permissions:
