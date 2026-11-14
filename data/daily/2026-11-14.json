@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-14",
+  "processed_at": "2026-11-14T11:21:21+05:30",
+  "arrivals_processed": false,
+  "rows": 67630,
+  "vehicles": 6134,
+  "routes": 1430,
+  "trips": 6662,
+  "with_route_pct": 100.0,
+  "with_speed_pct": 100.0,
+  "position_age_median_s": 26.0,
+  "buses_by_hour_ist": {
+    "11": 6134
+  },
+  "positions_file_mb": 0.8,
+  "polls": 20,
+  "poll_coverage_pct": 0.7,
+  "empty_or_failed_polls": 1,
+  "median_latency_ms": 1244.0,
+  "dropped": {
+    "dropped_bbox": 156,
+    "dropped_stale": 156,
+    "dropped_repeat": 10905,
+    "dropped_jump": 154,
+    "dropped_stationary": 33398
+  }
+}
